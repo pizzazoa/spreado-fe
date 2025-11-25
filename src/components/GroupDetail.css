@@ -1,0 +1,450 @@
+/* ============================================
+   Container
+   ============================================ */
+.group-detail-container {
+  position: fixed;
+  left: 307px;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  display: flex;
+  background: linear-gradient(90deg, rgba(220, 227, 251, 0.2) 0%, rgba(220, 227, 251, 0.2) 100%),
+    linear-gradient(90deg, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 1) 100%);
+  z-index: 50;
+  overflow: hidden;
+}
+
+.group-detail-loading,
+.group-detail-error {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  font-family: 'Roboto', 'Noto Sans KR', sans-serif;
+  font-size: 16px;
+  color: #666;
+}
+
+/* ============================================
+   Left Sidebar - Group Detail Panel
+   ============================================ */
+.group-detail-sidebar {
+  width: 271px;
+  height: 100vh;
+  background: #EEEEEE;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+/* Header */
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 15px 12px;
+  position: relative;
+}
+
+.back-button {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #1D1B20;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s;
+}
+
+.back-button:hover {
+  opacity: 0.7;
+}
+
+.group-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.group-settings-btn {
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #0b0f66;
+  padding: 4px;
+}
+
+.group-settings-btn:hover {
+  opacity: 0.8;
+}
+
+.group-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #8E8E93;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Roboto', sans-serif;
+  font-size: 18px;
+  font-weight: 500;
+  color: #000000;
+  flex-shrink: 0;
+}
+
+.group-name {
+  font-family: 'Roboto', 'Noto Sans KR', sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  color: #1D1B20;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Divider */
+.sidebar-divider {
+  width: 100%;
+  height: 4px;
+  background: #080353;
+  border-radius: 2px;
+  margin: 4px 0;
+  flex-shrink: 0;
+}
+
+/* Section */
+.sidebar-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0 19px;
+}
+
+.section-header {
+  background: #080353;
+  border: 0.8px solid #080353;
+  border-radius: 5px;
+  padding: 8px 12px;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  color: #F5F5F5;
+  text-align: center;
+  align-self: center;
+  white-space: nowrap;
+}
+
+/* Current Meeting */
+.current-meeting-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.current-meeting-card {
+  background: #F2F2F7;
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.meeting-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #D1D5DC;
+  flex-shrink: 0;
+}
+
+.meeting-indicator.active {
+  background: #34C759;
+}
+
+.meeting-name {
+  font-family: 'Roboto', 'Noto Sans KR', sans-serif;
+  font-size: 15px;
+  font-weight: 400;
+  color: #1D1B20;
+  line-height: 1.4;
+}
+
+.current-meeting-empty {
+  font-family: 'Roboto', 'Noto Sans KR', sans-serif;
+  font-size: 14px;
+  color: #666;
+  text-align: center;
+  padding: 20px 0;
+}
+
+/* Members Section */
+.members-section {
+  flex: 1;
+  min-height: 0;
+}
+
+.members-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  max-height: calc(100vh - 480px);
+}
+
+.member-card {
+  background: #F2F2F7;
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.member-role {
+  font-family: 'Roboto', sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  color: #1D1B20;
+  min-width: 40px;
+}
+
+.member-separator {
+  font-family: 'Roboto', sans-serif;
+  font-size: 15px;
+  color: #1D1B20;
+}
+
+.member-name {
+  font-family: 'Roboto', 'Noto Sans KR', sans-serif;
+  font-size: 15px;
+  font-weight: 400;
+  color: #1D1B20;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Add Member Button */
+.add-member-btn {
+  background: #080353;
+  border: 1.4px solid #080353;
+  width: 170px;
+  height: 56px;
+  border-radius: 8px;
+  padding: 16px 24px;
+  font-family: 'Inter', sans-serif;
+  font-size: 20px;
+  font-weight: 400;
+  color: #F5F5F5;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  margin: 18px auto;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.add-member-btn:hover {
+  opacity: 0.9;
+}
+
+/* ============================================
+   Right Main Area - Meetings List
+   ============================================ */
+.meetings-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Meetings Header */
+.meetings-header {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 20px;
+}
+
+.meetings-header-btn {
+  background: #080353;
+  border: 0.8px solid #080353;
+  border-radius: 5px;
+  padding: 8px 16px;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  color: #F5F5F5;
+  cursor: default;
+  white-space: nowrap;
+}
+
+/* Meetings List */
+.meetings-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-right: 8px;
+  margin-bottom: 80px;
+}
+
+.meetings-empty {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  font-family: 'Roboto', 'Noto Sans KR', sans-serif;
+  font-size: 15px;
+  color: #999;
+}
+
+/* Meeting Card */
+.meeting-card {
+  background: #FFFFFF;
+  border-radius: 10px;
+  box-shadow: 0px 1px 3px 0px rgba(0, 0, 0, 0.1), 0px 1px 2px -1px rgba(0, 0, 0, 0.1);
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: box-shadow 0.2s;
+}
+
+.meeting-card.clickable {
+  cursor: pointer;
+}
+
+.meeting-card:hover {
+  box-shadow: 0px 4px 6px 0px rgba(0, 0, 0, 0.12), 0px 2px 4px -1px rgba(0, 0, 0, 0.08);
+}
+
+.meeting-detail-embed {
+  position: relative;
+  min-height: 100%;
+}
+
+.meeting-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #D1D5DC;
+  flex-shrink: 0;
+}
+
+.status-dot.active {
+  background: #34C759;
+}
+
+.meeting-title {
+  font-family: 'Inter', 'Noto Sans KR', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  color: #101828;
+  margin: 0;
+  flex: 1;
+}
+
+.meeting-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-left: 22px;
+}
+
+.meeting-date,
+.meeting-members {
+  font-family: 'Inter', 'Noto Sans KR', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  color: #6A7282;
+}
+
+.join-meeting-btn {
+  background: #080353;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 24px;
+  font-family: 'Inter', 'Noto Sans KR', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: #FFFFFF;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  align-self: flex-end;
+}
+
+.join-meeting-btn:hover {
+  opacity: 0.9;
+}
+
+/* Create Meeting Button */
+.create-meeting-btn {
+  position: absolute;
+  bottom: 24px;
+  right: 40px;
+  background: #080353;
+  border: 1.6px solid #080353;
+  border-radius: 10px;
+  padding: 16px 32px;
+  font-family: 'Inter', sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  color: #F5F5F5;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  white-space: nowrap;
+}
+
+.create-meeting-btn:hover {
+  opacity: 0.9;
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+@media (max-width: 1200px) {
+  .group-detail-sidebar {
+    width: 240px;
+  }
+
+  .meetings-main {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 900px) {
+  .group-detail-container {
+    flex-direction: column;
+  }
+
+  .group-detail-sidebar {
+    width: 100%;
+    height: auto;
+    max-height: 40vh;
+  }
+
+  .meetings-main {
+    flex: 1;
+  }
+}
