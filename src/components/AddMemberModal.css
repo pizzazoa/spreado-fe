@@ -1,0 +1,139 @@
+/* AddMemberModal 전용 스타일 */
+
+.add-member-modal .modal-field {
+  margin-bottom: clamp(20px, 3%, 30px);
+}
+
+.add-member-modal .modal-field:first-of-type {
+  margin-top: clamp(100px, 15%, 120px);
+}
+
+.add-member-modal .modal-label {
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(20px, 2vw, 29.03px);
+  font-weight: 400;
+  color: #1e1e1e;
+  display: block;
+  margin-bottom: clamp(10px, 1.5%, 14.514px);
+}
+
+.add-member-modal .modal-input {
+  background: #ffffff;
+  border: 1.814px solid #2c2c2c;
+  border-radius: 13.195px;
+  padding: clamp(15px, 2%, 21.771px) clamp(20px, 2.5%, 29.029px);
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(16px, 1.8vw, 29.03px);
+  font-weight: 400;
+  color: #1e1e1e;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.add-member-modal .modal-input::placeholder {
+  color: #757575;
+}
+
+.add-member-modal .modal-footer {
+  position: absolute;
+  bottom: clamp(60px, 10%, 80px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+
+.add-member-modal .modal-button {
+  background: #080353;
+  border: 1.393px solid #080353;
+  border-radius: 8.41px;
+  padding: clamp(12px, 1.5%, 16.714px) clamp(16px, 2%, 24px);
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(16px, 1.5vw, 22.29px);
+  font-weight: 400;
+  color: #f5f5f5;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  white-space: nowrap;
+}
+
+.add-member-modal .modal-button:hover {
+  opacity: 0.9;
+}
+
+.add-member-modal .modal-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.add-member-modal .modal-button.secondary {
+  background: #aeaeb2;
+  border-color: #080353;
+}
+
+.add-member-modal .email-inputs-container {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.add-member-modal .email-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: 30vh;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.add-member-modal .email-input-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+}
+
+.add-member-modal .add-email-button {
+  width: 48px;
+  height: 48px;
+  background: transparent;
+  border: 2px solid #1e1e1e;
+  border-radius: 50%;
+  cursor: pointer;
+  color: #1e1e1e;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.add-member-modal .add-email-button:hover {
+  background: #f5f5f5;
+}
+
+.add-member-modal .remove-email-button {
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: 1px solid #999;
+  border-radius: 50%;
+  cursor: pointer;
+  color: #666;
+  font-size: 24px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.add-member-modal .remove-email-button:hover {
+  background: #fee;
+  border-color: #e66;
+  color: #e66;
+}
