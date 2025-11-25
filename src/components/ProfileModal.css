@@ -1,0 +1,118 @@
+/* ProfileModal 전용 스타일 */
+
+.profile-modal {
+  padding: clamp(24px, 4%, 40px) clamp(32px, 6%, 60px);
+}
+
+.profile-logo {
+  position: absolute;
+  left: clamp(32px, 6%, 60px);
+  top: clamp(24px, 4%, 40px);
+  width: clamp(80px, 12%, 120px);
+  height: auto;
+}
+
+.profile-logo img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+.logout-button {
+  position: absolute;
+  right: clamp(32px, 6%, 60px);
+  top: clamp(30px, 5%, 50px);
+  background: #E90B0F;
+  border: 1.055px solid #FF3B30;
+  border-radius: 6.372px;
+  padding: clamp(10px, 1.5%, 14px) clamp(16px, 2%, 24px);
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(14px, 1.5vw, 18px);
+  font-weight: 400;
+  color: #F5F5F5;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.logout-button:hover {
+  opacity: 0.9;
+}
+
+.profile-modal .modal-field {
+  margin-top: clamp(100px, 16%, 140px);
+  margin-bottom: clamp(24px, 3%, 32px);
+}
+
+.profile-modal .modal-field:first-of-type {
+  margin-top: clamp(100px, 16%, 140px);
+}
+
+.profile-modal .modal-label {
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(18px, 2vw, 24px);
+  font-weight: 500;
+  color: #1E1E1E;
+  display: block;
+  margin-bottom: clamp(8px, 1.5%, 12px);
+}
+
+.profile-modal .modal-input {
+  background: #FFFFFF;
+  border: 1.8px solid #2C2C2C;
+  border-radius: 12px;
+  padding: clamp(14px, 2%, 18px) clamp(18px, 2.5%, 24px);
+  font-family: 'Inter', 'Noto Sans KR', sans-serif;
+  font-size: clamp(15px, 1.8vw, 20px);
+  font-weight: 400;
+  color: #1E1E1E;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+.profile-modal .modal-input:focus {
+  outline: none;
+  border-color: #080353;
+}
+
+.profile-modal .modal-input::placeholder {
+  color: #757575;
+}
+
+.profile-modal .modal-input.readonly {
+  background: #ffffff;
+  cursor: default;
+}
+
+.profile-modal .modal-footer {
+  position: absolute;
+  bottom: clamp(40px, 8%, 60px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+
+.profile-modal .modal-button {
+  background: #080353;
+  border: 1.4px solid #080353;
+  border-radius: 8px;
+  padding: clamp(14px, 2%, 18px) clamp(24px, 3%, 36px);
+  font-family: 'Inter', 'Noto Sans KR', sans-serif;
+  font-size: clamp(16px, 1.8vw, 20px);
+  font-weight: 500;
+  color: #F5F5F5;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  white-space: nowrap;
+}
+
+.profile-modal .modal-button:hover {
+  opacity: 0.9;
+}
+
+.profile-modal .modal-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
