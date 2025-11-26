@@ -67,6 +67,25 @@ export interface GroupJoinRequest {
   role: Role;
 }
 
+export interface GroupInviteRequest {
+  emails: string[];
+  message?: string;
+}
+
+export interface GroupEmailInviteResponse {
+  groupId: number;
+  successCount: number;
+  sentEmails: string[];
+}
+
+export interface GroupInviteInfoResponse {
+  groupId: number;
+  groupName: string;
+  memberCount: number;
+  leaderName: string;
+  inviteLink: string;
+}
+
 // Meeting Types
 export type MeetingStatus = 'ONGOING' | 'ENDED';
 

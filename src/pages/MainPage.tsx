@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { groupService } from '../services/groupService';
 import type { Group } from '../types';
@@ -7,18 +7,21 @@ import Sidebar from '../components/Sidebar';
 import GroupDetail from '../components/GroupDetail';
 import ProfileModal from '../components/ProfileModal';
 import CreateGroupModal from '../components/CreateGroupModal';
+import InviteModal from '../components/InviteModal';
 import logoImage from '../assets/spreado_logo.png';
 import './MainPage.css';
 
 export default function MainPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { inviteCode } = useParams<{ inviteCode?: string }>();
   const { isAuthenticated, loading: authLoading } = useAuth();
   const [groups, setGroups] = useState<Group[]>([]);
   const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showCreateGroupModal, setShowCreateGroupModal] = useState(false);
+  const [pendingInviteCode, setPendingInviteCode] = useState<string | null>(null);
 
   // URL에서 groupId 파라미터 읽기
   useEffect(() => {
@@ -33,9 +36,23 @@ export default function MainPage() {
   // 로그인 확인
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
+      if (inviteCode) {
+        sessionStorage.setItem('pendingInvite', inviteCode);
+      }
       navigate('/');
+      return;
     }
-  }, [authLoading, isAuthenticated, navigate]);
+    if (!authLoading && isAuthenticated) {
+      const invite =
+        inviteCode ||
+        searchParams.get('inviteCode') ||
+        sessionStorage.getItem('pendingInvite');
+      if (invite) {
+        setPendingInviteCode(invite);
+        sessionStorage.removeItem('pendingInvite');
+      }
+    }
+  }, [authLoading, isAuthenticated, navigate, searchParams, inviteCode]);
 
   // 그룹 목록 로드
   useEffect(() => {
@@ -113,6 +130,26 @@ export default function MainPage() {
       </div>
 
       {selectedGroupId && <GroupDetail groupId={selectedGroupId} />}
+
+      <InviteModal
+        inviteCode={pendingInviteCode}
+        isOpen={!!pendingInviteCode}
+        onClose={() => setPendingInviteCode(null)}
+        onSuccess={() => {
+          setPendingInviteCode(null);
+          (async () => {
+            try {
+              setLoading(true);
+              const fetchedGroups = await groupService.getMyGroups();
+              setGroups(fetchedGroups);
+            } catch (error) {
+              console.error('Failed to reload groups after invite:', error);
+            } finally {
+              setLoading(false);
+            }
+          })();
+        }}
+      />
 
       {/* 프로필 모달 */}
       <ProfileModal

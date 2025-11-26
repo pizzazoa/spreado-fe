@@ -1,5 +1,13 @@
 import apiClient from './apiClient';
-import type { Group, GroupDetail, GroupCreateRequest, GroupJoinRequest } from '../types';
+import type {
+  Group,
+  GroupDetail,
+  GroupCreateRequest,
+  GroupJoinRequest,
+  GroupInviteRequest,
+  GroupEmailInviteResponse,
+  GroupInviteInfoResponse,
+} from '../types';
 
 export const groupService = {
   // 그룹 생성
@@ -34,5 +42,19 @@ export const groupService = {
   // 그룹 삭제 (리더만 가능)
   deleteGroup: async (groupId: number): Promise<void> => {
     await apiClient.delete(`/group/${groupId}`);
+  },
+
+  // 그룹 초대 이메일 발송
+  inviteMembers: async (groupId: number, data: GroupInviteRequest): Promise<GroupEmailInviteResponse> => {
+    const response = await apiClient.post<GroupEmailInviteResponse>(`/group/${groupId}/invite`, data);
+    return response.data;
+  },
+
+  // 초대 링크로 그룹 정보 조회 (쿼리 파라미터 link)
+  getGroupByInviteLink: async (inviteLink: string): Promise<GroupInviteInfoResponse> => {
+    const response = await apiClient.get<GroupInviteInfoResponse>('/group/invite-info', {
+      params: { link: inviteLink },
+    });
+    return response.data;
   },
 };
