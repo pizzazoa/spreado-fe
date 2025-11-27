@@ -95,20 +95,25 @@ export interface Meeting {
   groupId: number;
   title: string;
   status: MeetingStatus;
+  createdAt?: string;
+  startedAt?: string;
+  endedAt?: string;
+  members?: MeetingMember[];
 }
 
 // MeetingDetailResponse
 export interface MeetingDetail {
   meetingId: number;
-  groupId?: number;
   title: string;
   status: MeetingStatus;
   members: MeetingMember[];
+  noteId?: number;
+  // Optional fields kept for backward compatibility with earlier API versions
+  groupId?: number;
   summary?: string;
   note?: string;
   hostId?: number;
   hostUserId?: number;
-  noteId?: number;
   summaryId?: number;
   startedAt?: string;
   createdAt?: string;
@@ -127,6 +132,20 @@ export interface MeetingCreateRequest {
   title: string;
 }
 
+export interface MeetingCreateResponse {
+  meetingId: number;
+  groupId: number;
+  token: string;
+  roomId?: string;
+}
+
+export interface MeetingJoinResponse {
+  meetingId?: number;
+  groupId?: number;
+  token: string;
+  roomId?: string;
+}
+
 // Note Types
 export interface NoteResponse {
   noteId: number;
@@ -143,4 +162,8 @@ export interface SummaryResponse {
 
 export interface SummaryUpdateRequest {
   summaryJson: string;
+}
+
+export interface LiveblocksTokenResponse {
+  token: string;
 }
