@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { meetingService } from '../services/meetingService';
 import { summaryService } from '../services/summaryService';
+import { noteService } from '../services/noteService';
 import type { MeetingDetail } from '../types';
 import './MeetingDetailView.css';
 import '../pages/MeetingPage.css';
@@ -44,8 +45,72 @@ export default function MeetingDetailView({ meetingId, onBack }: MeetingDetailVi
   const [editedSummary, setEditedSummary] = useState('');
   const [isSendingMail, setIsSendingMail] = useState(false);
   const [showMailSentModal, setShowMailSentModal] = useState(false);
+  const [isMailSent, setIsMailSent] = useState(false);
 
   const cachedNotesRef = useRef<{ summary?: string; note?: string; title?: string }>({});
+
+  const formatNoteContent = (content: unknown): string => {
+    if (typeof content === 'string') return content;
+    try {
+      const extract = (node: any): string => {
+        if (!node) return '';
+        if (node.text) return node.text;
+        if (Array.isArray(node.content)) return node.content.map(extract).join(' ');
+        return '';
+      };
+      const maybeContent = (content as any).content;
+      if (maybeContent) {
+        const text = extract({ content: maybeContent });
+        if (text.trim()) return text.trim();
+      }
+      return JSON.stringify(content, null, 2);
+    } catch (error) {
+      console.warn('Failed to stringify note content', error);
+      return '노트 내용을 표시할 수 없습니다.';
+    }
+  };
+
+  // ✅ [수정됨] Milestone 객체 포맷팅 로직 추가
+  const formatSummaryContent = (raw: string): string => {
+    if (!raw) return '';
+    try {
+      const parsed = JSON.parse(raw);
+      if (typeof parsed !== 'object' || !parsed) return raw;
+      
+      const summaryPart = Array.isArray(parsed.summary) ? parsed.summary.join('\n') : parsed.summary;
+      const milestones = parsed.milestones || parsed.milestone;
+      const action = parsed.actionItemsByRoles || parsed.actionItemsByRole || parsed.actionItems;
+      
+      let text = '';
+      
+      if (summaryPart) {
+        text += `[summary]\n${summaryPart}\n\n`;
+      }
+      
+      if (milestones) {
+        const lines = Array.isArray(milestones) ? milestones : [];
+        text += `[milestone]\n${lines.map((l: any) => {
+          // 문자열이면 그대로, 객체면 task와 deadline을 조합해서 출력
+          if (typeof l === 'string') return `• ${l}`;
+          if (l && l.task) {
+            return `• ${l.task} (${l.deadline || '기한 미정'})`;
+          }
+          return `• ${JSON.stringify(l)}`; // 예외 처리
+        }).join('\n')}\n\n`;
+      }
+      
+      if (action) {
+        text += `[actionItemsByRoles]\n`;
+        Object.entries(action as Record<string, any>).forEach(([role, items]) => {
+          const arr = Array.isArray(items) ? items : [];
+          text += `${role}: ${arr.join(', ')}\n`;
+        });
+      }
+      return text.trim() || raw;
+    } catch {
+      return raw;
+    }
+  };
 
   const persistNotesToStorage = (payload: { title?: string; summary?: string; note?: string; status?: string }) => {
     cachedNotesRef.current = {
@@ -114,6 +179,17 @@ export default function MeetingDetailView({ meetingId, onBack }: MeetingDetailVi
       if (meetingData.status === 'ENDED' && meetingData.noteId && !summaryText) {
         await loadSummaryForNote(meetingData.noteId, { regenerate: false, openModal: false, skipSpinner: true });
       }
+
+      if (meetingData.noteId && !noteText) {
+        try {
+          const noteResponse = await noteService.getNoteDetail(meetingData.noteId);
+          const formatted = formatNoteContent(noteResponse.content);
+          setNote(formatted);
+          persistNotesToStorage({ note: formatted, summary: summaryText });
+        } catch (error) {
+          console.error('Failed to load note detail:', error);
+        }
+      }
     } catch (error) {
       console.error('Failed to load meeting:', error);
       alert('회의를 불러올 수 없습니다.');
@@ -149,6 +225,7 @@ export default function MeetingDetailView({ meetingId, onBack }: MeetingDetailVi
       setIsSendingMail(true);
       await summaryService.sendSummaryMail(summaryId);
       setShowMailSentModal(true);
+      setIsMailSent(true);
     } catch (error) {
       console.error('Failed to send summary mail:', error);
       alert('메일 전송에 실패했습니다.');
@@ -218,9 +295,9 @@ export default function MeetingDetailView({ meetingId, onBack }: MeetingDetailVi
       <div className="meeting-notes-container">
         <div className="meeting-sheet">
           <div className="meeting-sheet-content">
-            {activeTab === 'summary' ? (
+              {activeTab === 'summary' ? (
               <div className={`meeting-summary ${summary ? '' : 'empty'}`}>
-                {summary || '아직 요약이 제공되지 않았습니다.'}
+                {summary ? formatSummaryContent(summary) : '아직 요약이 제공되지 않았습니다.'}
               </div>
             ) : (
               <div className={`meeting-note ${note ? '' : 'empty'}`}>
@@ -243,17 +320,17 @@ export default function MeetingDetailView({ meetingId, onBack }: MeetingDetailVi
       {showSummaryModal && (
         <div className="meeting-ended-overlay">
           <div className="summary-result-modal">
-            <div className="summary-result-card">
-              <div className="summary-result-header">
-                <span className="summary-result-badge">회의본 AI 요약 결과</span>
-                <div className="summary-actions">
-                  {isEditingSummary ? (
-                    <>
-                      <button className="summary-action-btn" onClick={handleUpdateSummary}>저장</button>
+              <div className="summary-result-card">
+                <div className="summary-result-header">
+                  <span className="summary-result-badge">회의본 AI 요약 결과</span>
+                  <div className="summary-actions">
+                    {isEditingSummary ? (
+                      <>
+                      <button className="summary-action-btn" onClick={handleUpdateSummary} disabled={isMailSent}>저장</button>
                       <button className="summary-action-btn ghost" onClick={() => setIsEditingSummary(false)}>취소</button>
                     </>
                   ) : (
-                    <button className="summary-edit-icon" onClick={() => setIsEditingSummary(true)} aria-label="요약 수정">
+                    <button className="summary-edit-icon" onClick={() => setIsEditingSummary(true)} aria-label="요약 수정" disabled={isMailSent}>
                       ✏️
                     </button>
                   )}
@@ -293,8 +370,8 @@ export default function MeetingDetailView({ meetingId, onBack }: MeetingDetailVi
             <div className="mail-sent-icon" aria-hidden>
               ✉️
             </div>
-            <button className="meeting-ended-button" onClick={() => navigate('/main')}>
-              그룹 메인 화면으로 나가기
+            <button className="meeting-ended-button" onClick={() => setShowMailSentModal(false)}>
+              확인
             </button>
           </div>
         </div>

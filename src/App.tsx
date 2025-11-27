@@ -3,8 +3,8 @@ import { AuthProvider } from './contexts/AuthContext';
 import LoginPage from './pages/LoginPage';
 import OAuth2Redirect from './pages/OAuth2Redirect';
 import MainPage from './pages/MainPage';
-import InvitePage from './pages/InvitePage';
 import MeetingPage from './pages/MeetingPage';
+import MeetingOnGoingPage from './pages/MeetingOnGoingPage';
 import './App.css';
 
 function App() {
@@ -15,8 +15,9 @@ function App() {
           <Route path="/" element={<LoginPage />} />
           <Route path="/oauth2/redirect" element={<OAuth2Redirect />} />
           <Route path="/main" element={<MainPage />} />
-          <Route path="/invite/:inviteCode" element={<InvitePage />} />
+          <Route path="/invite/:inviteCode" element={<MainPage />} />
           <Route path="/meeting/:meetingId" element={<MeetingPage />} />
+          <Route path="/meeting-live/:meetingId" element={<MeetingOnGoingPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>
