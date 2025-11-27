@@ -1,10 +1,18 @@
 import apiClient from './apiClient';
-import type { Meeting, MeetingDetail, MeetingCreateRequest, NoteResponse } from '../types';
+import type { 
+  Meeting, 
+  MeetingDetail, 
+  MeetingCreateRequest, 
+  MeetingCreateResponse, 
+  MeetingJoinResponse, 
+  NoteResponse,
+  LiveblocksTokenResponse
+} from '../types';
 
 export const meetingService = {
   // 회의 생성
-  createMeeting: async (data: MeetingCreateRequest): Promise<Meeting> => {
-    const response = await apiClient.post<Meeting>('/meeting', data);
+  createMeeting: async (data: MeetingCreateRequest): Promise<MeetingCreateResponse> => {
+    const response = await apiClient.post<MeetingCreateResponse>('/meeting', data);
     return response.data;
   },
 
@@ -28,9 +36,10 @@ export const meetingService = {
     return response.data;
   },
 
-  // 회의 참여
-  joinMeeting: async (meetingId: number): Promise<void> => {
-    await apiClient.post(`/meeting/${meetingId}/join`);
+  // 회의 참여 (토큰 반환됨)
+  joinMeeting: async (meetingId: number, _groupIdHint?: number): Promise<MeetingJoinResponse> => {
+    const response = await apiClient.post<MeetingJoinResponse>(`/meeting/${meetingId}/join`);
+    return response.data;
   },
 
   // 회의 나가기
@@ -38,9 +47,15 @@ export const meetingService = {
     await apiClient.post(`/meeting/${meetingId}/leave`);
   },
 
-  // 회의 종료 (호스트만 가능)
+  // [수정] 회의 종료 (컨텐츠 저장 포함)
   endMeeting: async (meetingId: number): Promise<NoteResponse> => {
     const response = await apiClient.post<NoteResponse>(`/meeting/${meetingId}/end`);
+    return response.data;
+  },
+
+  // [추가] Liveblocks 토큰 개별 발급 (새로고침/재접속용)
+  getLiveblocksToken: async (meetingId: number): Promise<LiveblocksTokenResponse> => {
+    const response = await apiClient.post<LiveblocksTokenResponse>(`/liveblocks/${meetingId}`);
     return response.data;
   },
 };
