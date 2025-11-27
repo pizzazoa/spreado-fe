@@ -9,9 +9,10 @@ interface GroupSidebarProps {
   currentMeeting?: Meeting | null;
   onBack: () => void;
   onGroupsChanged?: () => void;
+  disableBackButton?: boolean;
 }
 
-export default function GroupSidebar({ group, currentMeeting, onBack, onGroupsChanged }: GroupSidebarProps) {
+export default function GroupSidebar({ group, currentMeeting, onBack, onGroupsChanged, disableBackButton }: GroupSidebarProps) {
   const [showConfirm, setShowConfirm] = useState(false);
 
   const handleConfirm = async () => {
@@ -35,7 +36,12 @@ export default function GroupSidebar({ group, currentMeeting, onBack, onGroupsCh
   return (
     <div className="group-detail-sidebar meeting-group-sidebar">
       <div className="sidebar-header">
-        <button className="back-button" onClick={onBack} aria-label="뒤로가기">
+        <button
+          className={`back-button ${disableBackButton ? 'disabled' : ''}`}
+          onClick={!disableBackButton ? onBack : undefined}
+          aria-label="뒤로가기"
+          disabled={disableBackButton}
+        >
           ←
         </button>
         <div className="group-info">

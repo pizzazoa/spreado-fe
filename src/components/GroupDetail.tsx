@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { groupService } from '../services/groupService';
 import { meetingService } from '../services/meetingService';
-import type { GroupDetail as GroupDetailType, Meeting } from '../types';
+import type { GroupDetail as GroupDetailType, Meeting, MeetingCreateResponse } from '../types';
 import AddMemberModal from './AddMemberModal';
 import CreateMeetingModal from './CreateMeetingModal';
 import MeetingDetailView from './MeetingDetailView';
@@ -24,6 +24,13 @@ export default function GroupDetail({ groupId }: GroupDetailProps) {
   const [showGroupConfirm, setShowGroupConfirm] = useState(false);
 
   const currentMeeting = meetings.find(m => m.status === 'ONGOING');
+
+  const formatMeetingDate = (isoDate?: string) => {
+    const parsed = isoDate ? new Date(isoDate) : new Date();
+    if (Number.isNaN(parsed.getTime())) return '날짜 정보 없음';
+    const weekday = parsed.toLocaleDateString('ko-KR', { weekday: 'long' });
+    return `${parsed.getFullYear()}년 ${parsed.getMonth() + 1}월 ${parsed.getDate()}일 ${weekday}`;
+  };
 
   useEffect(() => {
     const loadData = async () => {
@@ -53,16 +60,9 @@ export default function GroupDetail({ groupId }: GroupDetailProps) {
     setShowCreateMeetingModal(true);
   };
 
-  const handleMeetingCreated = async (meetingId: number) => {
-    try {
-      // 생성한 회의에 참가
-      await meetingService.joinMeeting(meetingId);
-      // 회의 페이지로 이동
-      navigate(`/meeting/${meetingId}`);
-    } catch (error) {
-      console.error('Failed to join created meeting:', error);
-      alert('회의 참가에 실패했습니다.');
-    }
+  const handleMeetingCreated = async (payload: MeetingCreateResponse) => {
+    // 생성자는 이미 참여자로 포함되며 토큰도 발급받음
+    navigate(`/meeting-live/${payload.meetingId}?groupId=${groupId}`);
   };
 
   const handleAddMember = () => {
@@ -88,8 +88,13 @@ export default function GroupDetail({ groupId }: GroupDetailProps) {
 
   const handleJoinMeeting = async (meetingId: number) => {
     try {
-      await meetingService.joinMeeting(meetingId);
-      navigate(`/meeting/${meetingId}`);
+      await meetingService.joinMeeting(meetingId, groupId);
+      const targetMeeting = meetings.find((m) => m.meetingId === meetingId);
+      if (targetMeeting?.status === 'ONGOING') {
+        navigate(`/meeting-live/${meetingId}?groupId=${groupId}`);
+      } else {
+        navigate(`/meeting/${meetingId}?groupId=${groupId}`);
+      }
     } catch (error) {
       console.error('Failed to join meeting:', error);
       alert('회의 참가에 실패했습니다.');
@@ -191,14 +196,15 @@ export default function GroupDetail({ groupId }: GroupDetailProps) {
                   </div>
 
                   <div className="meetings-list">
-                    {meetings.length === 0 ? (
+                  {meetings.length === 0 ? (
                       <div className="meetings-empty">
                         아직 생성된 회의가 없습니다.
                       </div>
                     ) : (
                       meetings.map((meeting) => {
                         const isOngoing = meeting.status === 'ONGOING';
-                        const memberCount = group.members.length;
+                        const memberCount = meeting.members?.length ?? group.members.length;
+                        const dateLabel = formatMeetingDate(meeting.startedAt || meeting.createdAt);
 
                         return (
                           <div
@@ -211,7 +217,7 @@ export default function GroupDetail({ groupId }: GroupDetailProps) {
                               <h3 className="meeting-title">{meeting.title}</h3>
                             </div>
                             <div className="meeting-meta">
-                              <span className="meeting-date">📅 2025년 11월 22일</span>
+                              <span className="meeting-date">📅 {dateLabel}</span>
                               <span className="meeting-members">👥 {memberCount}명</span>
                             </div>
                             {isOngoing && (
@@ -248,6 +254,7 @@ export default function GroupDetail({ groupId }: GroupDetailProps) {
           isOpen={showAddMemberModal}
           onClose={() => setShowAddMemberModal(false)}
           inviteLink={group.inviteLink}
+          groupId={group.groupId}
         />
       )}
 

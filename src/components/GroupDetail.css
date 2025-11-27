@@ -68,6 +68,12 @@
   opacity: 0.7;
 }
 
+.back-button.disabled,
+.back-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 .group-info {
   display: flex;
   align-items: center;

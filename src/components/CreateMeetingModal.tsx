@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import Modal from './Modal';
 import { meetingService } from '../services/meetingService';
+import type { MeetingCreateResponse } from '../types';
 import './CreateMeetingModal.css';
 
 interface CreateMeetingModalProps {
   isOpen: boolean;
   onClose: () => void;
   groupId: number;
-  onSuccess: (meetingId: number) => void | Promise<void>;
+  onSuccess: (payload: MeetingCreateResponse) => void | Promise<void>;
 }
 
 export default function CreateMeetingModal({
@@ -33,7 +34,7 @@ export default function CreateMeetingModal({
       });
 
       setMeetingName('');
-      await onSuccess(response.meetingId);
+      await onSuccess(response);
       onClose();
     } catch (error) {
       console.error('Failed to create meeting:', error);
