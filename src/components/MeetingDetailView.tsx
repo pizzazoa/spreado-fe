@@ -131,7 +131,7 @@ export default function MeetingDetailView({ meetingId, onBack }: MeetingDetailVi
 
   const loadSummaryForNote = async (
     noteIdValue: number,
-    options: { regenerate?: boolean; openModal?: boolean; skipSpinner?: boolean } = {},
+    options: { regenerate?: boolean; openModal?: boolean; skipSpinner?: boolean; skipTabSwitch?: boolean } = {},
   ) => {
     try {
       if (!options.skipSpinner) setIsGeneratingSummary(true);
@@ -142,7 +142,12 @@ export default function MeetingDetailView({ meetingId, onBack }: MeetingDetailVi
       setSummaryId(response.summaryId);
       setSummary(response.summaryJson);
       setEditedSummary(response.summaryJson);
-      setActiveTab('summary');
+
+      // skipTabSwitch 옵션이 true가 아닐 때만 탭 전환
+      if (!options.skipTabSwitch) {
+        setActiveTab('summary');
+      }
+
       setMeeting((prev) => (prev ? { ...prev, summary: response.summaryJson, summaryId: response.summaryId, noteId: noteIdValue } : prev));
       persistNotesToStorage({ summary: response.summaryJson, note });
       if (options.openModal) {
@@ -170,26 +175,44 @@ export default function MeetingDetailView({ meetingId, onBack }: MeetingDetailVi
 
       if (meetingData.summaryId) setSummaryId(meetingData.summaryId);
 
-      const summaryText = meetingData.summary ?? cachedNotesRef.current.summary ?? '';
-      const noteText = meetingData.note ?? cachedNotesRef.current.note ?? '';
-      setSummary(summaryText);
-      setNote(noteText);
-      persistNotesToStorage({ title: meetingData.title, summary: summaryText, note: noteText, status: meetingData.status });
+      // API 응답에 summary/note가 없으면 별도 API 호출
+      let summaryText = meetingData.summary ?? '';
+      let noteText = meetingData.note ?? '';
 
-      if (meetingData.status === 'ENDED' && meetingData.noteId && !summaryText) {
-        await loadSummaryForNote(meetingData.noteId, { regenerate: false, openModal: false, skipSpinner: true });
-      }
-
-      if (meetingData.noteId && !noteText) {
+      // Note 조회 (noteId가 있고 API 응답에 note가 없는 경우)
+      if (meetingData.noteId && !meetingData.note) {
         try {
           const noteResponse = await noteService.getNoteDetail(meetingData.noteId);
           const formatted = formatNoteContent(noteResponse.content);
+          noteText = formatted;
           setNote(formatted);
-          persistNotesToStorage({ note: formatted, summary: summaryText });
         } catch (error) {
           console.error('Failed to load note detail:', error);
+          // 캐시된 note가 있으면 사용
+          noteText = cachedNotesRef.current.note ?? '';
+          setNote(noteText);
         }
+      } else {
+        setNote(noteText);
       }
+
+      // Summary 조회 (회의 종료 상태이고 noteId가 있지만 API 응답에 summary가 없는 경우)
+      if (meetingData.status === 'ENDED' && meetingData.noteId && !meetingData.summary) {
+        try {
+          // skipTabSwitch: true로 자동 탭 전환 방지
+          await loadSummaryForNote(meetingData.noteId, { regenerate: false, openModal: false, skipSpinner: true, skipTabSwitch: true });
+          // loadSummaryForNote에서 setSummary를 호출하므로 여기서는 필요 없음
+        } catch (error) {
+          console.error('Failed to load summary:', error);
+          // 캐시된 summary가 있으면 사용
+          summaryText = cachedNotesRef.current.summary ?? '';
+          setSummary(summaryText);
+        }
+      } else {
+        setSummary(summaryText);
+      }
+
+      persistNotesToStorage({ title: meetingData.title, summary: summaryText, note: noteText, status: meetingData.status });
     } catch (error) {
       console.error('Failed to load meeting:', error);
       alert('회의를 불러올 수 없습니다.');
@@ -251,10 +274,18 @@ export default function MeetingDetailView({ meetingId, onBack }: MeetingDetailVi
 
   useEffect(() => {
     loadMeeting(true);
-    const interval = setInterval(() => loadMeeting(false), 8000);
-    return () => clearInterval(interval);
+
+    // ENDED 상태 회의는 폴링하지 않음
+    let interval: number | null = null;
+    if (meeting?.status !== 'ENDED') {
+      interval = setInterval(() => loadMeeting(false), 8000);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [meetingId]);
+  }, [meetingId, meeting?.status]);
 
   if (loading || !meeting) {
     return <div className="meeting-page-loading">로딩 중...</div>;
