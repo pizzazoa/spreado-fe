@@ -26,7 +26,11 @@ export default function GroupDetail({ groupId }: GroupDetailProps) {
   const currentMeeting = meetings.find(m => m.status === 'ONGOING');
 
   const formatMeetingDate = (isoDate?: string) => {
-    const parsed = isoDate ? new Date(isoDate) : new Date();
+    // 날짜 정보가 없으면 현재 날짜 대신 빈 문자열이나 대체 텍스트를 반환할 수도 있지만,
+    // 기존 로직(현재 날짜)을 유지하거나 1970년 등으로 처리될 수 있음을 유의
+    if (!isoDate) return '날짜 정보 없음';
+    
+    const parsed = new Date(isoDate);
     if (Number.isNaN(parsed.getTime())) return '날짜 정보 없음';
     const weekday = parsed.toLocaleDateString('ko-KR', { weekday: 'long' });
     return `${parsed.getFullYear()}년 ${parsed.getMonth() + 1}월 ${parsed.getDate()}일 ${weekday}`;
@@ -41,7 +45,14 @@ export default function GroupDetail({ groupId }: GroupDetailProps) {
           meetingService.getMeetingsByGroup(groupId),
         ]);
         setGroup(groupData);
-        setMeetings(meetingsData);
+        
+        // [수정] 최신순(createdAt 내림차순) 정렬
+        const sortedMeetings = meetingsData.sort((a, b) => {
+          const dateA = new Date(a.createdAt || 0).getTime();
+          const dateB = new Date(b.createdAt || 0).getTime();
+          return dateB - dateA;
+        });
+        setMeetings(sortedMeetings);
       } catch (error) {
         console.error('Failed to load group data:', error);
       } finally {
@@ -204,7 +215,8 @@ export default function GroupDetail({ groupId }: GroupDetailProps) {
                       meetings.map((meeting) => {
                         const isOngoing = meeting.status === 'ONGOING';
                         const memberCount = meeting.members?.length ?? group.members.length;
-                        const dateLabel = formatMeetingDate(meeting.startedAt || meeting.createdAt);
+                        // [수정] createdAt(생성일자) 사용
+                        const dateLabel = formatMeetingDate(meeting.createdAt);
 
                         return (
                           <div
