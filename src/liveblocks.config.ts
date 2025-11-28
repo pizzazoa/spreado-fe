@@ -1,5 +1,3 @@
-import { LiveList, LiveObject } from "@liveblocks/client";
-
 declare global {
   interface Liveblocks {
     // 커서에 표시될 사용자 정보

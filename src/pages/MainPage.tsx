@@ -129,7 +129,7 @@ export default function MainPage() {
         )}
       </div>
 
-      {selectedGroupId && <GroupDetail groupId={selectedGroupId} />}
+      {selectedGroupId && <GroupDetail key={selectedGroupId} groupId={selectedGroupId} />}
 
       <InviteModal
         inviteCode={pendingInviteCode}

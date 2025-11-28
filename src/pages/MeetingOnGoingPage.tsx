@@ -5,9 +5,12 @@ import GroupSidebar from '../components/GroupSidebar';
 import MeetingLiveModal from '../components/MeetingLiveModal';
 import ProfileModal from '../components/ProfileModal';
 import InviteModal from '../components/InviteModal';
+import SummarySavingModal from '../components/SummarySavingModal';
+import SummaryResultModal from '../components/SummaryResultModal';
 import { groupService } from '../services/groupService';
 import { meetingService } from '../services/meetingService';
-import type { Group, GroupDetail, MeetingDetail } from '../types';
+import { summaryService } from '../services/summaryService';
+import type { Group, GroupDetail, MeetingDetail, SummaryResponse } from '../types';
 import './MeetingOnGoingPage.css';
 
 export default function MeetingOnGoingPage() {
@@ -22,10 +25,15 @@ export default function MeetingOnGoingPage() {
   const [pendingInviteCode, setPendingInviteCode] = useState<string | null>(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [loading, setLoading] = useState(true);
-  
+
   // [추가] 토큰 상태 관리
   const [token, setToken] = useState<string | undefined>(undefined);
-  
+
+  // [추가] 요약 모달 상태 관리
+  const [showSavingModal, setShowSavingModal] = useState(false);
+  const [showResultModal, setShowResultModal] = useState(false);
+  const [summaryData, setSummaryData] = useState<SummaryResponse | null>(null);
+
   const meetingGroupIdRef = useRef<number | null>(null);
 
   const meetingIdNumber = useMemo(() => (meetingId ? Number(meetingId) : null), [meetingId]);
@@ -127,17 +135,63 @@ export default function MeetingOnGoingPage() {
   }, [meetingMeta?.groupId, selectedGroupId]);
 
   const handleLeave = () => {
-    const searchGroupId = Number(new URLSearchParams(location.search).get('groupId'));
-    const targetGroupId = meetingGroupIdRef.current || meetingMeta?.groupId || selectedGroupId || (Number.isNaN(searchGroupId) ? null : searchGroupId);
+    // 우선순위: meetingMeta.groupId (회의가 속한 그룹) > meetingGroupIdRef (초기 설정값) > selectedGroupId (현재 선택된 그룹)
+    const targetGroupId = meetingMeta?.groupId ?? meetingGroupIdRef.current ?? selectedGroupId;
     const redirect = targetGroupId ? `/main?groupId=${targetGroupId}` : '/main';
-    
-    // 뒤로가기가 가능한 경우 뒤로 가고, 아니면 메인으로 이동
-    if (window.history.length > 1) navigate(-1);
-    else navigate(redirect);
+
+    // 명확하게 메인 페이지로 이동 (뒤로가기 사용 안 함)
+    navigate(redirect, { replace: true });
   };
 
   const handleBack = () => {
     handleLeave();
+  };
+
+  // [추가] 회의 종료 시작 핸들러 (로딩 모달 표시)
+  const handleEndingStart = () => {
+    setShowSavingModal(true);
+  };
+
+  // [추가] 회의 종료 완료 핸들러 (요약 조회 및 결과 모달 표시)
+  const handleEndingComplete = async (noteId: number) => {
+    try {
+      // 요약 조회
+      const summary = await summaryService.getSummaryByNote(noteId);
+      setSummaryData(summary);
+      setShowSavingModal(false);
+      setShowResultModal(true);
+    } catch (error) {
+      console.error('Failed to fetch summary:', error);
+      setShowSavingModal(false);
+      alert('요약을 불러오는 데 실패했습니다.');
+      // 그룹 디테일 페이지로 이동
+      handleLeave();
+    }
+  };
+
+  // [추가] 회의 종료 취소 핸들러 (에러 발생 시 로딩 모달 닫기)
+  const handleEndingCancel = () => {
+    setShowSavingModal(false);
+  };
+
+  // [추가] 이메일 전송 완료 후 핸들러
+  const handleSendComplete = () => {
+    setShowResultModal(false);
+    setSummaryData(null);
+    // 회의가 속한 그룹의 디테일 페이지로 명확하게 이동
+    const targetGroupId = meetingMeta?.groupId ?? meetingGroupIdRef.current ?? selectedGroupId;
+    const redirect = targetGroupId ? `/main?groupId=${targetGroupId}` : '/main';
+    navigate(redirect, { replace: true });
+  };
+
+  // [추가] 결과 모달 닫기 핸들러
+  const handleResultModalClose = () => {
+    setShowResultModal(false);
+    setSummaryData(null);
+    // 회의가 속한 그룹의 디테일 페이지로 명확하게 이동
+    const targetGroupId = meetingMeta?.groupId ?? meetingGroupIdRef.current ?? selectedGroupId;
+    const redirect = targetGroupId ? `/main?groupId=${targetGroupId}` : '/main';
+    navigate(redirect, { replace: true });
   };
 
   if (!meetingIdNumber || loading || !meetingMeta) {
@@ -157,8 +211,15 @@ export default function MeetingOnGoingPage() {
       <Sidebar
         groups={groups}
         selectedGroupId={selectedGroupId}
-        onSelectGroup={(gid) => setSelectedGroupId(gid)}
-        onCreateGroup={() => navigate('/main')}
+        onSelectGroup={(gid) => {
+          // 다른 그룹 선택 시 메인 페이지로 이동 (현재 페이지 완전히 벗어남)
+          if (gid) {
+            navigate(`/main?groupId=${gid}`, { replace: true });
+          } else {
+            navigate('/main', { replace: true });
+          }
+        }}
+        onCreateGroup={() => navigate('/main', { replace: true })}
         onMyProfile={() => setShowProfileModal(true)}
       />
 
@@ -194,11 +255,26 @@ export default function MeetingOnGoingPage() {
             onClose={handleLeave}
             onEnded={handleLeave}
             onLeft={handleLeave}
+            onEndingStart={handleEndingStart}
+            onEndingComplete={handleEndingComplete}
+            onEndingCancel={handleEndingCancel}
           />
         </div>
       </div>
 
       <ProfileModal isOpen={showProfileModal} onClose={() => setShowProfileModal(false)} />
+
+      <SummarySavingModal isOpen={showSavingModal} />
+
+      {summaryData && (
+        <SummaryResultModal
+          isOpen={showResultModal}
+          onClose={handleResultModalClose}
+          summaryId={summaryData.summaryId}
+          summaryContent={summaryData.summaryJson}
+          onSendComplete={handleSendComplete}
+        />
+      )}
 
       <InviteModal
         inviteCode={pendingInviteCode}
