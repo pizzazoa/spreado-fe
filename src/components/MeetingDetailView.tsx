@@ -70,45 +70,71 @@ export default function MeetingDetailView({ meetingId, onBack }: MeetingDetailVi
     }
   };
 
-  // ✅ [수정됨] Milestone 객체 포맷팅 로직 추가
-  const formatSummaryContent = (raw: string): string => {
-    if (!raw) return '';
+  // [수정됨] JSON 파싱 및 구조화된 렌더링을 위한 컴포넌트
+  const renderStructuredSummary = (rawJson: string) => {
+    if (!rawJson) return <div className="summary-empty">요약 내용이 없습니다.</div>;
+
     try {
-      const parsed = JSON.parse(raw);
-      if (typeof parsed !== 'object' || !parsed) return raw;
-      
-      const summaryPart = Array.isArray(parsed.summary) ? parsed.summary.join('\n') : parsed.summary;
-      const milestones = parsed.milestones || parsed.milestone;
-      const action = parsed.actionItemsByRoles || parsed.actionItemsByRole || parsed.actionItems;
-      
-      let text = '';
-      
-      if (summaryPart) {
-        text += `[summary]\n${summaryPart}\n\n`;
+      const parsed = JSON.parse(rawJson);
+      if (typeof parsed !== 'object' || !parsed) {
+        return <div className="summary-text">{rawJson}</div>;
       }
-      
-      if (milestones) {
-        const lines = Array.isArray(milestones) ? milestones : [];
-        text += `[milestone]\n${lines.map((l: any) => {
-          // 문자열이면 그대로, 객체면 task와 deadline을 조합해서 출력
-          if (typeof l === 'string') return `• ${l}`;
-          if (l && l.task) {
-            return `• ${l.task} (${l.deadline || '기한 미정'})`;
-          }
-          return `• ${JSON.stringify(l)}`; // 예외 처리
-        }).join('\n')}\n\n`;
-      }
-      
-      if (action) {
-        text += `[actionItemsByRoles]\n`;
-        Object.entries(action as Record<string, any>).forEach(([role, items]) => {
-          const arr = Array.isArray(items) ? items : [];
-          text += `${role}: ${arr.join(', ')}\n`;
-        });
-      }
-      return text.trim() || raw;
-    } catch {
-      return raw;
+
+      return (
+        <div className="structured-summary">
+          {/* Summary Section */}
+          {(parsed.summary || parsed.summaries) && (
+            <div className="summary-block">
+              <h3 className="summary-block-title">Summary</h3>
+              <div className="summary-block-content">
+                {Array.isArray(parsed.summary)
+                  ? parsed.summary.map((line: string, i: number) => <p key={i}>{line}</p>)
+                  : <p>{parsed.summary}</p>}
+              </div>
+            </div>
+          )}
+
+          {/* Milestone Section */}
+          {(parsed.milestone || parsed.milestones) && (
+            <div className="summary-block">
+              <h3 className="summary-block-title">Milestones</h3>
+              <ul className="summary-list">
+                {(Array.isArray(parsed.milestone ? parsed.milestone : parsed.milestones) ? (parsed.milestone || parsed.milestones) : []).map((item: any, i: number) => {
+                  if (typeof item === 'string') return <li key={i}>{item}</li>;
+                  return (
+                    <li key={i}>
+                      <span className="task">{item.task}</span>
+                      {item.deadline && <span className="deadline">{item.deadline}</span>}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
+
+          {/* Action Items Section */}
+          {(parsed.actionItemsByRoles || parsed.actionItemsByRole || parsed.actionItems) && (
+            <div className="summary-block">
+              <h3 className="summary-block-title">Action Items</h3>
+              <div className="action-items-grid">
+                {Object.entries(parsed.actionItemsByRoles || parsed.actionItemsByRole || parsed.actionItems).map(([role, items]: [string, any]) => (
+                  <div key={role} className="action-role-group">
+                    <h4 className="role-name">{role}</h4>
+                    <ul className="role-items">
+                      {(Array.isArray(items) ? items : []).map((act: string, j: number) => (
+                        <li key={j}>{act}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    } catch (e) {
+      // JSON 파싱 실패 시 원본 텍스트 출력
+      return <div className="summary-text" style={{ whiteSpace: 'pre-wrap' }}>{rawJson}</div>;
     }
   };
 
@@ -143,7 +169,6 @@ export default function MeetingDetailView({ meetingId, onBack }: MeetingDetailVi
       setSummary(response.summaryJson);
       setEditedSummary(response.summaryJson);
 
-      // skipTabSwitch 옵션이 true가 아닐 때만 탭 전환
       if (!options.skipTabSwitch) {
         setActiveTab('summary');
       }
@@ -175,11 +200,9 @@ export default function MeetingDetailView({ meetingId, onBack }: MeetingDetailVi
 
       if (meetingData.summaryId) setSummaryId(meetingData.summaryId);
 
-      // API 응답에 summary/note가 없으면 별도 API 호출
       let summaryText = meetingData.summary ?? '';
       let noteText = meetingData.note ?? '';
 
-      // Note 조회 (noteId가 있고 API 응답에 note가 없는 경우)
       if (meetingData.noteId && !meetingData.note) {
         try {
           const noteResponse = await noteService.getNoteDetail(meetingData.noteId);
@@ -188,7 +211,6 @@ export default function MeetingDetailView({ meetingId, onBack }: MeetingDetailVi
           setNote(formatted);
         } catch (error) {
           console.error('Failed to load note detail:', error);
-          // 캐시된 note가 있으면 사용
           noteText = cachedNotesRef.current.note ?? '';
           setNote(noteText);
         }
@@ -196,15 +218,11 @@ export default function MeetingDetailView({ meetingId, onBack }: MeetingDetailVi
         setNote(noteText);
       }
 
-      // Summary 조회 (회의 종료 상태이고 noteId가 있지만 API 응답에 summary가 없는 경우)
       if (meetingData.status === 'ENDED' && meetingData.noteId && !meetingData.summary) {
         try {
-          // skipTabSwitch: true로 자동 탭 전환 방지
           await loadSummaryForNote(meetingData.noteId, { regenerate: false, openModal: false, skipSpinner: true, skipTabSwitch: true });
-          // loadSummaryForNote에서 setSummary를 호출하므로 여기서는 필요 없음
         } catch (error) {
           console.error('Failed to load summary:', error);
-          // 캐시된 summary가 있으면 사용
           summaryText = cachedNotesRef.current.summary ?? '';
           setSummary(summaryText);
         }
@@ -274,17 +292,13 @@ export default function MeetingDetailView({ meetingId, onBack }: MeetingDetailVi
 
   useEffect(() => {
     loadMeeting(true);
-
-    // ENDED 상태 회의는 폴링하지 않음
     let interval: number | null = null;
     if (meeting?.status !== 'ENDED') {
       interval = setInterval(() => loadMeeting(false), 8000);
     }
-
     return () => {
       if (interval) clearInterval(interval);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [meetingId, meeting?.status]);
 
   if (loading || !meeting) {
@@ -321,15 +335,12 @@ export default function MeetingDetailView({ meetingId, onBack }: MeetingDetailVi
         </button>
       </div>
 
-      <div className="meeting-divider" />
-
       <div className="meeting-notes-container">
         <div className="meeting-sheet">
           <div className="meeting-sheet-content">
-              {activeTab === 'summary' ? (
-              <div className={`meeting-summary ${summary ? '' : 'empty'}`}>
-                {summary ? formatSummaryContent(summary) : '아직 요약이 제공되지 않았습니다.'}
-              </div>
+            {activeTab === 'summary' ? (
+              // [수정됨] 구조화된 렌더링 함수 호출
+              renderStructuredSummary(summary)
             ) : (
               <div className={`meeting-note ${note ? '' : 'empty'}`}>
                 {note || '아직 회의록 원본이 제공되지 않았습니다.'}
@@ -351,12 +362,12 @@ export default function MeetingDetailView({ meetingId, onBack }: MeetingDetailVi
       {showSummaryModal && (
         <div className="meeting-ended-overlay">
           <div className="summary-result-modal">
-              <div className="summary-result-card">
-                <div className="summary-result-header">
-                  <span className="summary-result-badge">회의본 AI 요약 결과</span>
-                  <div className="summary-actions">
-                    {isEditingSummary ? (
-                      <>
+            <div className="summary-result-card">
+              <div className="summary-result-header">
+                <span className="summary-result-badge">회의본 AI 요약 결과</span>
+                <div className="summary-actions">
+                  {isEditingSummary ? (
+                    <>
                       <button className="summary-action-btn" onClick={handleUpdateSummary} disabled={isMailSent}>저장</button>
                       <button className="summary-action-btn ghost" onClick={() => setIsEditingSummary(false)}>취소</button>
                     </>
@@ -374,7 +385,10 @@ export default function MeetingDetailView({ meetingId, onBack }: MeetingDetailVi
                   onChange={(e) => setEditedSummary(e.target.value)}
                 />
               ) : (
-                <div className="summary-result-body">{summary || '요약을 불러오는 중입니다.'}</div>
+                <div className="summary-result-body">
+                  {/* 모달에서도 구조화된 요약 사용 */}
+                  {renderStructuredSummary(summary)}
+                </div>
               )}
               {summaryId && (
                 <button

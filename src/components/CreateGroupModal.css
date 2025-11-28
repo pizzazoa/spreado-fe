@@ -1,143 +1,111 @@
-/* CreateGroupModal 전용 스타일 */
-
-.create-group-modal .modal-field {
-  margin-bottom: clamp(20px, 3%, 30px);
+.create-group-modal {
+  padding: 20px 0;
 }
 
-.create-group-modal .modal-field:first-of-type {
-  margin-top: clamp(100px, 15%, 120px);
+.modal-field {
+  margin-bottom: 24px;
 }
 
-.create-group-modal .modal-field.invite-section {
-  margin-top: clamp(40px, 6%, 60px);
-}
-
-.create-group-modal .modal-label {
-  font-family: 'Inter', sans-serif;
-  font-size: clamp(20px, 2vw, 29.03px);
-  font-weight: 400;
-  color: #1e1e1e;
+.modal-label {
   display: block;
-  margin-bottom: clamp(10px, 1.5%, 14.514px);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
 }
 
-.create-group-modal .modal-input {
-  background: #ffffff;
-  border: 1.814px solid #2c2c2c;
-  border-radius: 13.195px;
-  padding: clamp(15px, 2%, 21.771px) clamp(20px, 2.5%, 29.029px);
-  font-family: 'Inter', sans-serif;
-  font-size: clamp(16px, 1.8vw, 29.03px);
-  font-weight: 400;
-  color: #1e1e1e;
+.modal-input {
   width: 100%;
+  padding: 12px 16px;
+  border: 1px solid #E5E7EB;
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  background: var(--bg-subtle);
+  transition: all 0.2s;
   box-sizing: border-box;
 }
 
-.create-group-modal .modal-input::placeholder {
-  color: #1e1e1e;
+.modal-input:focus {
+  border-color: var(--primary-color);
+  background: var(--bg-surface);
+  box-shadow: 0 0 0 3px rgba(8, 3, 83, 0.1);
 }
 
-.create-group-modal .modal-footer {
-  position: absolute;
-  bottom: clamp(60px, 10%, 80px);
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 16px;
-  justify-content: center;
-}
-
-.create-group-modal .modal-button {
-  background: #080353;
-  border: 1.393px solid #080353;
-  border-radius: 8.41px;
-  padding: clamp(12px, 1.5%, 16.714px) clamp(16px, 2%, 24px);
-  font-family: 'Inter', sans-serif;
-  font-size: clamp(16px, 1.5vw, 22.29px);
-  font-weight: 400;
-  color: #f5f5f5;
-  cursor: pointer;
-  transition: opacity 0.2s;
-  white-space: nowrap;
-}
-
-.create-group-modal .modal-button:hover {
-  opacity: 0.9;
-}
-
-.create-group-modal .modal-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.create-group-modal .modal-button.secondary {
-  background: #aeaeb2;
-  border-color: #080353;
-}
-
+/* Email Inputs Section */
 .email-inputs-container {
   display: flex;
-  gap: 16px;
+  gap: 12px;
   align-items: flex-start;
 }
 
+.add-email-button {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--bg-subtle);
+  border: 1px solid #E5E7EB;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.add-email-button:hover {
+  background: #E5E7EB;
+}
+
 .email-inputs {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  max-height: 30vh;
+  gap: 10px;
+  max-height: 240px;
   overflow-y: auto;
-  flex: 1;
 }
 
 .email-input-row {
   display: flex;
   align-items: center;
-  gap: 12px;
-  position: relative;
-}
-
-.add-email-button {
-  width: 48px;
-  height: 48px;
-  background: transparent;
-  border: 2px solid #1e1e1e;
-  border-radius: 50%;
-  cursor: pointer;
-  color: #1e1e1e;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-  flex-shrink: 0;
-}
-
-.add-email-button:hover {
-  background: #f5f5f5;
+  gap: 8px;
 }
 
 .remove-email-button {
   width: 32px;
   height: 32px;
-  background: transparent;
-  border: 1px solid #999;
   border-radius: 50%;
-  cursor: pointer;
-  color: #666;
-  font-size: 24px;
-  padding: 0;
+  color: var(--text-tertiary);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
-  flex-shrink: 0;
-  line-height: 1;
+  font-size: 18px;
 }
 
 .remove-email-button:hover {
-  background: #fee;
-  border-color: #e66;
-  color: #e66;
+  background: #FEF2F2;
+  color: var(--danger-color);
+}
+
+.modal-footer {
+  margin-top: 32px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.modal-button {
+  background: var(--primary-color);
+  color: white;
+  padding: 12px 24px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.modal-button:hover {
+  background: var(--primary-hover);
+}
+
+.modal-button.secondary {
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
 }

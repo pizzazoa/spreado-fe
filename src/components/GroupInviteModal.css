@@ -1,69 +1,53 @@
-/* GroupInviteModal 전용 스타일 */
-
-.group-invite-modal {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  padding: 40px;
+.invite-modal, .group-invite-modal {
+  padding: 40px 20px;
+  text-align: center;
 }
 
 .invite-message {
-  text-align: center;
-  margin-bottom: 80px;
-  margin-top: 60px;
+  margin-bottom: 40px;
 }
 
 .invite-message p {
-  font-family: 'Roboto', 'Noto Sans KR', sans-serif;
-  font-size: clamp(32px, 4vw, 48px);
-  font-weight: 400;
-  line-height: 1.25;
-  color: #000000;
-  margin: 0 0 8px 0;
-}
-
-.invite-message p:last-child {
-  margin-bottom: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 8px 0;
+  line-height: 1.4;
 }
 
 .invite-buttons {
   display: flex;
-  gap: clamp(40px, 5%, 60px);
   justify-content: center;
+  gap: 16px;
 }
 
 .decline-button,
 .accept-button {
-  border: 2.186px solid;
-  border-radius: 13.2px;
-  padding: clamp(20px, 2.5%, 26px) clamp(40px, 5%, 60px);
-  font-family: 'Inter', sans-serif;
-  font-size: clamp(24px, 2.5vw, 35px);
-  font-weight: 400;
-  cursor: pointer;
-  transition: opacity 0.2s;
-  white-space: nowrap;
-  min-width: 140px;
+  min-width: 120px;
+  padding: 14px 24px;
+  border-radius: var(--radius-md);
+  font-size: 16px;
+  font-weight: 600;
+  transition: transform 0.1s;
 }
 
 .decline-button {
-  background: #E90B0F;
-  border-color: #E90B0F;
-  color: #F5F5F5;
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
+  border: 1px solid #E5E7EB;
 }
 
 .decline-button:hover {
-  opacity: 0.9;
+  background: #E5E7EB;
 }
 
 .accept-button {
-  background: #080353;
-  border-color: #080353;
-  color: #F5F5F5;
+  background: var(--primary-color);
+  color: white;
+  box-shadow: var(--shadow-md);
 }
 
 .accept-button:hover {
-  opacity: 0.9;
+  background: var(--primary-hover);
+  transform: translateY(-1px);
 }

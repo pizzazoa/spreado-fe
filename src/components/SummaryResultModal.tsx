@@ -153,7 +153,12 @@ export default function SummaryResultModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} showCloseButton={false}>
+    <Modal 
+      isOpen={isOpen} 
+      onClose={onClose} 
+      showCloseButton={false}
+      className="summary-result-modal-container" // [추가] 넓은 너비 스타일 적용
+    >
       <div className="summary-result-modal">
         <div className="summary-result-header">
           <div className="summary-result-title">회의본 AI 요약 결과</div>

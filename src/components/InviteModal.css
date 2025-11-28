@@ -1,19 +1,18 @@
-.invite-modal {
-  min-width: 320px;
+.invite-modal, .group-invite-modal {
+  padding: 40px 20px;
+  text-align: center;
 }
 
 .invite-message {
-  text-align: center;
-  font-family: 'Inter', 'Noto Sans KR', sans-serif;
-  font-size: 18px;
-  font-weight: 700;
-  color: #111827;
-  line-height: 1.4;
-  margin-bottom: 24px;
+  margin-bottom: 40px;
 }
 
 .invite-message p {
-  margin: 4px 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 8px 0;
+  line-height: 1.4;
 }
 
 .invite-buttons {
@@ -25,33 +24,30 @@
 .decline-button,
 .accept-button {
   min-width: 120px;
-  padding: 10px 14px;
-  border-radius: 8px;
-  border: none;
-  font-family: 'Inter', 'Noto Sans KR', sans-serif;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: opacity 0.2s;
+  padding: 14px 24px;
+  border-radius: var(--radius-md);
+  font-size: 16px;
+  font-weight: 600;
+  transition: transform 0.1s;
 }
 
 .decline-button {
-  background: #0b0f66;
-  color: #ffffff;
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
+  border: 1px solid #E5E7EB;
+}
+
+.decline-button:hover {
+  background: #E5E7EB;
 }
 
 .accept-button {
-  background: #e11d48;
-  color: #ffffff;
+  background: var(--primary-color);
+  color: white;
+  box-shadow: var(--shadow-md);
 }
 
-.accept-button:disabled {
-  background: #9ca3af;
-  cursor: not-allowed;
-  opacity: 0.7;
-}
-
-.decline-button:hover,
 .accept-button:hover {
-  opacity: 0.9;
+  background: var(--primary-hover);
+  transform: translateY(-1px);
 }

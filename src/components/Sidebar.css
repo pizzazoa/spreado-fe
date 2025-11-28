@@ -2,163 +2,112 @@
   position: fixed;
   left: 0;
   top: 0;
-  width: 307px;
+  width: 300px;
   height: 100vh;
-  background: white;
-  overflow: hidden;
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border-color);
   z-index: 100;
-  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  box-sizing: border-box;
+  box-shadow: var(--shadow-sm);
 }
 
-.my-profile-button {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  width: 128px;
-  height: 50px;
-  background: #080353;
-  border: 1.471px solid #080353;
-  border-radius: 8.883px;
+.sidebar-header {
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-family: 'Inter', sans-serif;
-  font-size: 20px;
-  font-weight: 400;
-  color: #f5f5f5;
-  cursor: pointer;
-  transition: opacity 0.2s;
-}
-
-.my-profile-button:hover {
-  opacity: 0.9;
+  justify-content: space-between;
+  margin-bottom: 32px;
 }
 
 .sidebar-logo {
-  position: absolute;
-  top: 8px;
-  left: 232px;
-  width: 62.143px;
-  height: 56px;
+  width: 48px;
+  height: auto;
   object-fit: contain;
 }
 
-.divider-top {
-  position: absolute;
-  top: 64px;
-  left: 0;
-  width: 100%;
-  height: 12px;
-  display: flex;
-  align-items: center;
+.my-profile-button {
+  padding: 8px 16px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 14px;
 }
 
-.divider-top::before {
-  content: '';
-  width: 100%;
-  height: 4px;
-  background: #080353;
-  border-radius: 2px;
+.my-profile-button:hover {
+  background: var(--border-color);
+}
+
+.divider-top, .divider-bottom {
+  display: none; /* Hide old dividers for modern look */
 }
 
 .group-list {
-  position: absolute;
-  top: 95px;
-  left: 27.5px;
-  width: 252px;
-  max-height: calc(100vh - 95px - 104px);
+  flex: 1;
   overflow-y: auto;
-  background: #f2f2f7;
-  border-radius: 12px;
   display: flex;
   flex-direction: column;
-  z-index: 101;
+  gap: 8px;
+  margin-bottom: 20px;
 }
 
 .group-item {
   display: flex;
   align-items: center;
-  gap: 16px;
-  min-height: 56px;
-  padding: 8px 16px;
-  cursor: pointer;
-  transition: background 0.2s;
-  position: relative;
-  z-index: 102;
+  gap: 12px;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s;
+  color: var(--text-secondary);
 }
 
 .group-item:hover {
-  background: rgba(0, 0, 0, 0.05);
+  background: var(--bg-subtle);
+  color: var(--text-primary);
 }
 
 .group-item.selected {
-  background: rgba(8, 3, 83, 0.1);
+  background: rgba(8, 3, 83, 0.05);
+  color: var(--primary-color);
+  font-weight: 600;
 }
 
 .group-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 100px;
-  background: #8e8e93;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #E0E7FF;
+  color: var(--primary-color);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Roboto', sans-serif;
-  font-size: 16px;
-  font-weight: 500;
-  color: black;
-  flex-shrink: 0;
+  font-weight: 700;
+  font-size: 14px;
+  box-shadow: var(--shadow-sm);
 }
 
 .group-name {
-  flex: 1;
-  font-family: 'Roboto', sans-serif;
-  font-size: 16px;
-  font-weight: 400;
-  color: #1d1b20;
-  line-height: 24px;
-}
-
-
-.divider-bottom {
-  position: absolute;
-  bottom: 92px;
-  left: 0;
-  width: 100%;
-  height: 12px;
-  display: flex;
-  align-items: center;
-}
-
-.divider-bottom::before {
-  content: '';
-  width: 100%;
-  height: 4px;
-  background: #080353;
-  border-radius: 2px;
+  font-size: 15px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .create-group-button {
-  position: absolute;
-  bottom: 24px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 170px;
-  height: 56px;
-  background: #080353;
-  border: 1.393px solid #080353;
-  border-radius: 8.41px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: 'Inter', sans-serif;
-  font-size: 20px;
-  font-weight: 400;
-  color: #f5f5f5;
-  cursor: pointer;
-  transition: opacity 0.2s;
+  width: 100%;
+  padding: 14px;
+  background: var(--primary-color);
+  color: var(--text-white);
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 15px;
+  box-shadow: var(--shadow-md);
 }
 
 .create-group-button:hover {
-  opacity: 0.9;
+  background: var(--primary-hover);
+  transform: translateY(-1px);
 }
