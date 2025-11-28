@@ -1,0 +1,42 @@
+.summary-saving-modal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+}
+
+.summary-saving-loader {
+  width: 210px;
+  height: 210px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.summary-saving-spinner {
+  width: 175px;
+  height: 175px;
+  border: 8px solid rgba(30, 30, 30, 0.1);
+  border-top-color: rgba(30, 30, 30, 1);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.summary-saving-text {
+  font-family: 'Roboto', 'Noto Sans KR', sans-serif;
+  font-size: 54.359px;
+  font-weight: 400;
+  line-height: 66.439px;
+  text-align: center;
+  color: #000000;
+  margin: 0;
+}
