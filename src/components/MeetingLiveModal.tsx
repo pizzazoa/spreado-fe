@@ -24,10 +24,13 @@ interface MeetingLiveModalProps {
   onClose: () => void;
   onEnded?: () => void;
   onLeft?: () => void;
+  onEndingStart?: () => void;
+  onEndingComplete?: (noteId: number) => void;
+  onEndingCancel?: () => void;
 }
 
-function MeetingRoomInner({ 
-  title, dateLabel, participants, isHost, meetingId, onClose, onEnded, onLeft 
+function MeetingRoomInner({
+  title, dateLabel, participants, isHost, meetingId, onClose, onEnded, onLeft, onEndingStart, onEndingComplete, onEndingCancel
 }: any) {
   const room = useRoom();
   const broadcast = useBroadcastEvent();
@@ -50,37 +53,62 @@ function MeetingRoomInner({
     if (!confirm("회의를 종료하시겠습니까? 회의록이 저장되고 요약이 생성됩니다.")) return;
 
     setIsEnding(true);
+
+    // 로딩 모달 표시
+    if (onEndingStart) {
+      onEndingStart();
+    }
+
     try {
       // 1. [유지] Liveblocks Storage에 에디터 내용 저장 (백엔드가 가져갈 데이터)
       if (editorInstance) {
         console.log("💾 [Host] Saving content to Room Storage...");
         const contentJson = editorInstance.getJSON();
         const { root } = await room.getStorage();
-        root.set("content", JSON.stringify(contentJson)); 
+        root.set("content", JSON.stringify(contentJson));
         console.log("✅ [Host] Content saved!");
       }
 
-      // 2. [유지] 참가자 종료 신호 전송
-      broadcast({ type: 'MEETING_ENDED' });
-      
-      // 3. [유지] 동기화 대기 (2초 권장)
+      // 2. [유지] 동기화 대기 (2초 권장)
       console.log("⏳ Waiting for Liveblocks sync...");
       await new Promise(resolve => setTimeout(resolve, 2000));
 
-      // 4. 회의 종료 API 호출 (백엔드에서 요약 생성까지 수행함)
+      // 3. 회의 종료 API 호출 (백엔드에서 호스트 검증 및 요약 생성까지 수행함)
       console.log("🚀 [Host] Ending meeting via API...");
-      await meetingService.endMeeting(meetingId);
+      const noteResponse = await meetingService.endMeeting(meetingId);
       console.log("✅ [Host] Meeting Ended successfully.");
 
-      // ❌ [삭제됨] 프론트에서 별도로 요약 생성 API를 호출하지 않습니다.
+      // 4. [수정] API 성공 후에만 참가자 종료 신호 전송 (호스트 검증 통과 확인됨)
+      console.log("📢 [Host] Broadcasting MEETING_ENDED to all participants...");
+      broadcast({ type: 'MEETING_ENDED' });
 
-      if (onEnded) onEnded();
-      else onClose();
+      // 5. 완료 모달 표시를 위해 noteId 전달
+      if (onEndingComplete && noteResponse.noteId) {
+        onEndingComplete(noteResponse.noteId);
+      } else {
+        // 이전 방식 호환
+        if (onEnded) onEnded();
+        else onClose();
+      }
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ [Host] Failed to end meeting:', error);
-      alert('회의 종료 처리 중 오류가 발생했습니다.');
-    } finally {
+
+      // 로딩 모달 닫기
+      if (onEndingCancel) {
+        onEndingCancel();
+      }
+
+      // 에러 메시지 표시
+      const errorMessage = error?.response?.data?.message || error?.message || '회의 종료 처리 중 오류가 발생했습니다.';
+
+      // 호스트 권한 관련 에러인지 확인
+      if (errorMessage.includes('호스트') || errorMessage.includes('권한') || error?.response?.status === 403) {
+        alert('회의를 종료할 권한이 없습니다. 호스트만 회의를 종료할 수 있습니다.');
+      } else {
+        alert(errorMessage);
+      }
+
       setIsEnding(false);
     }
   };
@@ -145,7 +173,7 @@ export default function MeetingLiveModal(props: MeetingLiveModalProps) {
   const isHost = !props.hostUserId || user?.id === props.hostUserId;
   const usedInitialToken = useRef(false);
 
-  const resolveAuth = async (room?: string) => {
+  const resolveAuth = async (_room?: string) => {
     if (initialToken && !usedInitialToken.current) {
       usedInitialToken.current = true;
       return { token: initialToken };
