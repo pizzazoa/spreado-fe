@@ -137,12 +137,19 @@ export default function MeetingPage() {
     loadMeetingContext();
   }, [loadMeetingContext]);
 
+  // meetingId가 없으면 메인으로 리다이렉트 (useEffect로 이동하여 렌더링 중 navigate 호출 방지)
+  useEffect(() => {
+    if (!meetingIdNumber) {
+      navigate('/main', { replace: true });
+    }
+  }, [meetingIdNumber, navigate]);
+
   const handleSelectGroup = (groupId: number | null) => {
-    setSelectedGroupId(groupId);
+    // 다른 그룹 선택 시 메인 페이지로 이동 (현재 페이지 완전히 벗어남)
     if (groupId) {
-      navigate(`/main?groupId=${groupId}`);
+      navigate(`/main?groupId=${groupId}`, { replace: true });
     } else {
-      navigate('/main');
+      navigate('/main', { replace: true });
     }
   };
 
@@ -155,7 +162,6 @@ export default function MeetingPage() {
   };
 
   if (!meetingIdNumber) {
-    navigate('/main');
     return null;
   }
 
@@ -165,7 +171,7 @@ export default function MeetingPage() {
         groups={groups}
         selectedGroupId={selectedGroupId}
         onSelectGroup={handleSelectGroup}
-        onCreateGroup={() => navigate('/main')}
+        onCreateGroup={() => navigate('/main', { replace: true })}
         onMyProfile={() => setShowProfileModal(true)}
       />
 
