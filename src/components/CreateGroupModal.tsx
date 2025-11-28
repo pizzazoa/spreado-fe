@@ -45,14 +45,26 @@ export default function CreateGroupModal({ isOpen, onClose, onSuccess }: CreateG
   const handleRoleSelect = async (role: Role) => {
     try {
       setIsLoading(true);
-      // 빈 이메일 제거
-      const validEmails = inviteEmails.filter(email => email.trim());
-
-      await groupService.createGroup({
+      
+      // 1. 그룹 생성 요청
+      const newGroup = await groupService.createGroup({
         name: groupName.trim(),
-        inviteEmails: validEmails,
         role,
+        // createGroup API가 자체적으로 초대를 처리하지 않을 수 있으므로 
+        // 여기서 inviteEmails를 보내는 것과 별개로 아래에서 명시적으로 초대 API를 호출합니다.
       });
+
+      // 2. 이메일 초대 발송 (유효한 이메일이 있는 경우)
+      const validEmails = inviteEmails.map(e => e.trim()).filter(Boolean);
+      if (validEmails.length > 0 && newGroup.groupId) {
+        try {
+          await groupService.inviteMembers(newGroup.groupId, { emails: validEmails });
+          console.log('초대 메일 발송 성공');
+        } catch (inviteError) {
+          console.error('초대 메일 발송 실패:', inviteError);
+          alert('그룹은 생성되었으나, 초대 메일 발송에 실패했습니다.');
+        }
+      }
 
       alert('그룹이 생성되었습니다!');
       setGroupName('');
@@ -127,9 +139,9 @@ export default function CreateGroupModal({ isOpen, onClose, onSuccess }: CreateG
             <button
               className={`modal-button ${!isButtonEnabled ? 'secondary' : ''}`}
               onClick={handleCreateGroup}
-              disabled={!isButtonEnabled}
+              disabled={!isButtonEnabled || isLoading}
             >
-              그룹 생성
+              {isLoading ? '생성 중...' : '그룹 생성'}
             </button>
           </div>
         </div>

@@ -13,6 +13,25 @@ interface GroupDetailProps {
   groupId: number;
 }
 
+// [추가] 모던한 SVG 아이콘 컴포넌트
+const CalendarIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+    <line x1="16" y1="2" x2="16" y2="6"></line>
+    <line x1="8" y1="2" x2="8" y2="6"></line>
+    <line x1="3" y1="10" x2="21" y2="10"></line>
+  </svg>
+);
+
+const UserGroupIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+    <circle cx="9" cy="7" r="4"></circle>
+    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+  </svg>
+);
+
 export default function GroupDetail({ groupId }: GroupDetailProps) {
   const navigate = useNavigate();
   const [group, setGroup] = useState<GroupDetailType | null>(null);
@@ -26,10 +45,7 @@ export default function GroupDetail({ groupId }: GroupDetailProps) {
   const currentMeeting = meetings.find(m => m.status === 'ONGOING');
 
   const formatMeetingDate = (isoDate?: string) => {
-    // 날짜 정보가 없으면 현재 날짜 대신 빈 문자열이나 대체 텍스트를 반환할 수도 있지만,
-    // 기존 로직(현재 날짜)을 유지하거나 1970년 등으로 처리될 수 있음을 유의
     if (!isoDate) return '날짜 정보 없음';
-    
     const parsed = new Date(isoDate);
     if (Number.isNaN(parsed.getTime())) return '날짜 정보 없음';
     const weekday = parsed.toLocaleDateString('ko-KR', { weekday: 'long' });
@@ -46,7 +62,7 @@ export default function GroupDetail({ groupId }: GroupDetailProps) {
         ]);
         setGroup(groupData);
         
-        // [수정] 최신순(createdAt 내림차순) 정렬
+        // 최신순(createdAt 내림차순) 정렬
         const sortedMeetings = meetingsData.sort((a, b) => {
           const dateA = new Date(a.createdAt || 0).getTime();
           const dateB = new Date(b.createdAt || 0).getTime();
@@ -72,7 +88,6 @@ export default function GroupDetail({ groupId }: GroupDetailProps) {
   };
 
   const handleMeetingCreated = async (payload: MeetingCreateResponse) => {
-    // 생성자는 이미 참여자로 포함되며 토큰도 발급받음
     navigate(`/meeting-live/${payload.meetingId}?groupId=${groupId}`);
   };
 
@@ -131,7 +146,6 @@ export default function GroupDetail({ groupId }: GroupDetailProps) {
           <>
             {/* 왼쪽 패널 - 그룹 디테일 사이드바 */}
             <div className="group-detail-sidebar">
-              {/* 헤더 영역 */}
               <div className="sidebar-header">
                 <button className="back-button" onClick={handleBack} aria-label="뒤로가기">
                   ←
@@ -152,10 +166,8 @@ export default function GroupDetail({ groupId }: GroupDetailProps) {
                 </button>
               </div>
 
-              {/* 구분선 */}
               <div className="sidebar-divider" />
 
-              {/* 현재 진행 중인 회의 섹션 */}
               <div className="sidebar-section">
                 <div className="section-header">현재 진행 중인 회의</div>
                 <div className="current-meeting-wrapper">
@@ -172,10 +184,8 @@ export default function GroupDetail({ groupId }: GroupDetailProps) {
                 </div>
               </div>
 
-              {/* 구분선 */}
               <div className="sidebar-divider" />
 
-              {/* Group Members 섹션 */}
               <div className="sidebar-section members-section">
                 <div className="section-header">Group Members</div>
                 <div className="members-list">
@@ -189,10 +199,8 @@ export default function GroupDetail({ groupId }: GroupDetailProps) {
                 </div>
               </div>
 
-              {/* 하단 구분선 */}
               <div className="sidebar-divider" />
 
-              {/* 멤버 추가하기 버튼 */}
               <button className="add-member-btn" onClick={handleAddMember}>
                 멤버 추가하기
               </button>
@@ -215,7 +223,6 @@ export default function GroupDetail({ groupId }: GroupDetailProps) {
                       meetings.map((meeting) => {
                         const isOngoing = meeting.status === 'ONGOING';
                         const memberCount = meeting.members?.length ?? group.members.length;
-                        // [수정] createdAt(생성일자) 사용
                         const dateLabel = formatMeetingDate(meeting.createdAt);
 
                         return (
@@ -229,8 +236,13 @@ export default function GroupDetail({ groupId }: GroupDetailProps) {
                               <h3 className="meeting-title">{meeting.title}</h3>
                             </div>
                             <div className="meeting-meta">
-                              <span className="meeting-date">📅 {dateLabel}</span>
-                              <span className="meeting-members">👥 {memberCount}명</span>
+                              {/* [수정] 아이콘 적용 */}
+                              <span className="meeting-date" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <CalendarIcon /> {dateLabel}
+                              </span>
+                              <span className="meeting-members" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <UserGroupIcon /> {memberCount}명
+                              </span>
                             </div>
                             {isOngoing && (
                               <button
@@ -260,7 +272,6 @@ export default function GroupDetail({ groupId }: GroupDetailProps) {
         )}
       </div>
 
-      {/* 멤버 추가 모달 */}
       {group && (
         <AddMemberModal
           isOpen={showAddMemberModal}
@@ -270,7 +281,6 @@ export default function GroupDetail({ groupId }: GroupDetailProps) {
         />
       )}
 
-      {/* 새 회의 생성 모달 */}
       {group && (
         <CreateMeetingModal
           isOpen={showCreateMeetingModal}
