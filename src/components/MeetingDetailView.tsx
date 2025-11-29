@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { meetingService } from '../services/meetingService';
 import { summaryService } from '../services/summaryService';
@@ -8,6 +8,21 @@ import './MeetingDetailView.css';
 import '../pages/MeetingPage.css';
 
 type TabKey = 'summary' | 'note';
+
+// ProseMirror 노드 타입 정의 (간소화)
+interface TextNode {
+  type: 'text';
+  text: string;
+  marks?: Array<{ type: string }>;
+}
+
+interface ElementNode {
+  type: string;
+  content?: Array<ElementNode | TextNode>;
+  attrs?: any;
+}
+
+type PMNode = ElementNode | TextNode;
 
 const buildStorageKey = (meetingId: number) => `meeting:notes:${meetingId}`;
 
@@ -35,7 +50,10 @@ export default function MeetingDetailView({ meetingId, onBack }: MeetingDetailVi
   const [meetingTitle, setMeetingTitle] = useState('');
   const [meetingDate, setMeetingDate] = useState('');
   const [summary, setSummary] = useState('');
-  const [note, setNote] = useState('');
+  
+  // note 상태를 구조화된 데이터(PMNode) 또는 문자열로 관리
+  const [noteContent, setNoteContent] = useState<PMNode | string | null>(null);
+  
   const [summaryId, setSummaryId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabKey>('summary');
@@ -47,30 +65,104 @@ export default function MeetingDetailView({ meetingId, onBack }: MeetingDetailVi
   const [showMailSentModal, setShowMailSentModal] = useState(false);
   const [isMailSent, setIsMailSent] = useState(false);
 
-  const cachedNotesRef = useRef<{ summary?: string; note?: string; title?: string }>({});
+  const cachedNotesRef = useRef<{ summary?: string; note?: any; title?: string }>({});
 
-  const formatNoteContent = (content: unknown): string => {
-    if (typeof content === 'string') return content;
+  // 회의록 원본 데이터 전처리 레이어
+  const preprocessNoteContent = (rawContent: unknown): PMNode | string => {
+    if (!rawContent) return '';
+
     try {
-      const extract = (node: any): string => {
-        if (!node) return '';
-        if (node.text) return node.text;
-        if (Array.isArray(node.content)) return node.content.map(extract).join(' ');
-        return '';
-      };
-      const maybeContent = (content as any).content;
-      if (maybeContent) {
-        const text = extract({ content: maybeContent });
-        if (text.trim()) return text.trim();
+      let content = rawContent;
+
+      // 1. 문자열인 경우 JSON 파싱 시도
+      if (typeof content === 'string') {
+        try {
+          content = JSON.parse(content);
+        } catch {
+          return String(rawContent); // 파싱 실패 시 일반 텍스트로 반환
+        }
       }
-      return JSON.stringify(content, null, 2);
+
+      // 2. { "data": { "content": "..." } } 형태 등 중첩 구조 처리
+      if (content && typeof content === 'object' && !Array.isArray(content)) {
+        const anyContent = content as any;
+        // data.content가 있는 경우
+        if (anyContent.data && anyContent.data.content) {
+          content = anyContent.data.content;
+          if (typeof content === 'string') {
+            try { content = JSON.parse(content); } catch {}
+          }
+        }
+      }
+
+      // 3. ProseMirror 문서 구조인지 확인 (type: 'doc', content: [...])
+      if (content && typeof content === 'object' && (content as any).type === 'doc' && Array.isArray((content as any).content)) {
+        return content as PMNode;
+      }
+
+      // 구조가 맞지 않으면 문자열로 변환 (또는 객체 그대로 반환하여 렌더링 시 처리)
+      return typeof content === 'string' ? content : JSON.stringify(content, null, 2);
     } catch (error) {
-      console.warn('Failed to stringify note content', error);
-      return '노트 내용을 표시할 수 없습니다.';
+      console.warn('Note preprocessing failed:', error);
+      return String(rawContent);
     }
   };
 
-  // [수정됨] JSON 파싱 및 구조화된 렌더링을 위한 컴포넌트
+  // ProseMirror 노드 렌더링 함수 (재귀)
+  const renderPMNode = (node: PMNode, key: number | string): React.ReactNode => {
+    // 텍스트 노드 처리
+    if (node.type === 'text') {
+      const textNode = node as TextNode;
+      let element: React.ReactNode = textNode.text;
+      
+      if (textNode.marks) {
+        textNode.marks.forEach(mark => {
+          if (mark.type === 'bold') {
+            element = <strong key={`${key}-bold`}>{element}</strong>;
+          } else if (mark.type === 'code') {
+            element = <code key={`${key}-code`}>{element}</code>;
+          } else if (mark.type === 'italic') {
+            element = <em key={`${key}-italic`}>{element}</em>;
+          } else if (mark.type === 'strike') {
+            element = <s key={`${key}-strike`}>{element}</s>;
+          }
+        });
+      }
+      return <span key={key}>{element}</span>;
+    }
+
+    // 요소 노드 처리
+    const elementNode = node as ElementNode;
+    const children = elementNode.content?.map((child, idx) => renderPMNode(child, idx));
+
+    switch (elementNode.type) {
+      case 'doc':
+        return <div key={key} className="pm-doc">{children}</div>;
+      case 'paragraph':
+        return <p key={key}>{children}</p>;
+      case 'bulletList':
+        return <ul key={key}>{children}</ul>;
+      case 'orderedList':
+        return <ol key={key}>{children}</ol>;
+      case 'listItem':
+        return <li key={key}>{children}</li>;
+      case 'horizontalRule':
+        return <hr key={key} />;
+      case 'heading':
+        const level = elementNode.attrs?.level || 1;
+        const Tag = `h${level}` as keyof React.JSX.IntrinsicElements;
+        return <Tag key={key}>{children}</Tag>;
+      case 'blockquote':
+        return <blockquote key={key}>{children}</blockquote>;
+      case 'codeBlock':
+        return <pre key={key}><code>{children}</code></pre>;
+      default:
+        // 알 수 없는 타입은 div로 감싸서 렌더링
+        return <div key={key} className={`pm-${elementNode.type}`}>{children}</div>;
+    }
+  };
+
+  // 요약본 구조화 렌더링
   const renderStructuredSummary = (rawJson: string) => {
     if (!rawJson) return <div className="summary-empty">요약 내용이 없습니다.</div>;
 
@@ -82,7 +174,6 @@ export default function MeetingDetailView({ meetingId, onBack }: MeetingDetailVi
 
       return (
         <div className="structured-summary">
-          {/* Summary Section */}
           {(parsed.summary || parsed.summaries) && (
             <div className="summary-block">
               <h3 className="summary-block-title">Summary</h3>
@@ -93,8 +184,6 @@ export default function MeetingDetailView({ meetingId, onBack }: MeetingDetailVi
               </div>
             </div>
           )}
-
-          {/* Milestone Section */}
           {(parsed.milestone || parsed.milestones) && (
             <div className="summary-block">
               <h3 className="summary-block-title">Milestones</h3>
@@ -111,8 +200,6 @@ export default function MeetingDetailView({ meetingId, onBack }: MeetingDetailVi
               </ul>
             </div>
           )}
-
-          {/* Action Items Section */}
           {(parsed.actionItemsByRoles || parsed.actionItemsByRole || parsed.actionItems) && (
             <div className="summary-block">
               <h3 className="summary-block-title">Action Items</h3>
@@ -133,12 +220,11 @@ export default function MeetingDetailView({ meetingId, onBack }: MeetingDetailVi
         </div>
       );
     } catch (e) {
-      // JSON 파싱 실패 시 원본 텍스트 출력
       return <div className="summary-text" style={{ whiteSpace: 'pre-wrap' }}>{rawJson}</div>;
     }
   };
 
-  const persistNotesToStorage = (payload: { title?: string; summary?: string; note?: string; status?: string }) => {
+  const persistNotesToStorage = (payload: { title?: string; summary?: string; note?: any; status?: string }) => {
     cachedNotesRef.current = {
       title: payload.title ?? cachedNotesRef.current.title,
       summary: payload.summary ?? cachedNotesRef.current.summary,
@@ -174,7 +260,7 @@ export default function MeetingDetailView({ meetingId, onBack }: MeetingDetailVi
       }
 
       setMeeting((prev) => (prev ? { ...prev, summary: response.summaryJson, summaryId: response.summaryId, noteId: noteIdValue } : prev));
-      persistNotesToStorage({ summary: response.summaryJson, note });
+      persistNotesToStorage({ summary: response.summaryJson, note: noteContent });
       if (options.openModal) {
         setShowSummaryModal(true);
         setIsEditingSummary(false);
@@ -201,21 +287,27 @@ export default function MeetingDetailView({ meetingId, onBack }: MeetingDetailVi
       if (meetingData.summaryId) setSummaryId(meetingData.summaryId);
 
       let summaryText = meetingData.summary ?? '';
-      let noteText = meetingData.note ?? '';
+      let processedNote: PMNode | string = '';
 
-      if (meetingData.noteId && !meetingData.note) {
+      if (meetingData.noteId) {
         try {
-          const noteResponse = await noteService.getNoteDetail(meetingData.noteId);
-          const formatted = formatNoteContent(noteResponse.content);
-          noteText = formatted;
-          setNote(formatted);
+          // 노트 정보가 이미 있으면 그것을 사용, 없으면 API 호출
+          // [수정] 타입 에러 해결을 위해 any 타입 사용
+          let rawContent: any = meetingData.note; 
+          if (!rawContent) {
+             const noteResponse = await noteService.getNoteDetail(meetingData.noteId);
+             rawContent = noteResponse.content;
+          }
+          
+          processedNote = preprocessNoteContent(rawContent);
+          setNoteContent(processedNote);
         } catch (error) {
           console.error('Failed to load note detail:', error);
-          noteText = cachedNotesRef.current.note ?? '';
-          setNote(noteText);
+          processedNote = cachedNotesRef.current.note ?? '';
+          setNoteContent(processedNote);
         }
       } else {
-        setNote(noteText);
+        setNoteContent('');
       }
 
       if (meetingData.status === 'ENDED' && meetingData.noteId && !meetingData.summary) {
@@ -230,7 +322,7 @@ export default function MeetingDetailView({ meetingId, onBack }: MeetingDetailVi
         setSummary(summaryText);
       }
 
-      persistNotesToStorage({ title: meetingData.title, summary: summaryText, note: noteText, status: meetingData.status });
+      persistNotesToStorage({ title: meetingData.title, summary: summaryText, note: processedNote, status: meetingData.status });
     } catch (error) {
       console.error('Failed to load meeting:', error);
       alert('회의를 불러올 수 없습니다.');
@@ -250,7 +342,7 @@ export default function MeetingDetailView({ meetingId, onBack }: MeetingDetailVi
       setSummary(response.summaryJson);
       setEditedSummary(response.summaryJson);
       setIsEditingSummary(false);
-      persistNotesToStorage({ summary: response.summaryJson, note });
+      persistNotesToStorage({ summary: response.summaryJson, note: noteContent });
     } catch (error) {
       console.error('Failed to update summary:', error);
       alert('요약 수정에 실패했습니다.');
@@ -279,10 +371,10 @@ export default function MeetingDetailView({ meetingId, onBack }: MeetingDetailVi
     const cachedRaw = localStorage.getItem(buildStorageKey(meetingId));
     if (cachedRaw) {
       try {
-        const cached = JSON.parse(cachedRaw) as { summary?: string; note?: string; title?: string };
+        const cached = JSON.parse(cachedRaw);
         cachedNotesRef.current = cached;
         if (cached.summary) setSummary(cached.summary);
-        if (cached.note) setNote(cached.note);
+        if (cached.note) setNoteContent(cached.note);
         if (cached.title) setMeetingTitle(cached.title);
       } catch (error) {
         console.warn('Failed to parse cached meeting notes', error);
@@ -339,11 +431,12 @@ export default function MeetingDetailView({ meetingId, onBack }: MeetingDetailVi
         <div className="meeting-sheet">
           <div className="meeting-sheet-content">
             {activeTab === 'summary' ? (
-              // [수정됨] 구조화된 렌더링 함수 호출
               renderStructuredSummary(summary)
             ) : (
-              <div className={`meeting-note ${note ? '' : 'empty'}`}>
-                {note || '아직 회의록 원본이 제공되지 않았습니다.'}
+              <div className={`meeting-note ${!noteContent ? 'empty' : ''}`}>
+                {noteContent 
+                  ? (typeof noteContent === 'string' ? noteContent : renderPMNode(noteContent, 'root'))
+                  : '아직 회의록 원본이 제공되지 않았습니다.'}
               </div>
             )}
           </div>
@@ -386,7 +479,6 @@ export default function MeetingDetailView({ meetingId, onBack }: MeetingDetailVi
                 />
               ) : (
                 <div className="summary-result-body">
-                  {/* 모달에서도 구조화된 요약 사용 */}
                   {renderStructuredSummary(summary)}
                 </div>
               )}

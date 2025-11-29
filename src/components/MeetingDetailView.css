@@ -89,3 +89,55 @@
   margin-bottom: 4px;
   color: var(--text-secondary);
 }
+
+/* [추가] ProseMirror Doc Styles */
+.pm-doc {
+  font-size: 16px;
+  line-height: 1.8;
+  color: var(--text-primary);
+}
+
+.pm-doc p {
+  margin: 0 0 12px 0;
+}
+
+.pm-doc ul, .pm-doc ol {
+  margin: 0 0 16px 0;
+  padding-left: 24px;
+}
+
+.pm-doc li {
+  margin-bottom: 4px;
+}
+
+.pm-doc h1, .pm-doc h2, .pm-doc h3 {
+  margin-top: 24px;
+  margin-bottom: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.pm-doc h1 { font-size: 24px; }
+.pm-doc h2 { font-size: 20px; border-bottom: 1px solid #eee; padding-bottom: 4px; }
+.pm-doc h3 { font-size: 18px; }
+
+.pm-doc blockquote {
+  border-left: 4px solid var(--border-color);
+  margin: 16px 0;
+  padding-left: 16px;
+  color: var(--text-secondary);
+}
+
+.pm-doc pre {
+  background: var(--bg-subtle);
+  padding: 12px;
+  border-radius: 8px;
+  overflow-x: auto;
+  font-family: monospace;
+}
+
+.pm-doc hr {
+  border: none;
+  border-top: 1px solid var(--border-color);
+  margin: 24px 0;
+}
