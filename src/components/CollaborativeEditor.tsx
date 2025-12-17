@@ -14,6 +14,24 @@ interface CollaborativeEditorProps {
   setEditorInstance: (editor: any) => void;
 }
 
+// 사용자별 일관된 랜덤 색상 생성 함수
+function generateUserColor(userId: string): string {
+  const colors = [
+    '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8',
+    '#F7DC6F', '#BB8FCE', '#85C1E2', '#F8B739', '#52B788',
+    '#E74C3C', '#3498DB', '#9B59B6', '#1ABC9C', '#F39C12',
+    '#E67E22', '#16A085', '#27AE60', '#2980B9', '#8E44AD'
+  ];
+
+  // userId를 숫자로 해싱하여 일관된 색상 선택
+  let hash = 0;
+  for (let i = 0; i < userId.length; i++) {
+    hash = userId.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % colors.length;
+  return colors[index];
+}
+
 export default function CollaborativeEditor({ setEditorInstance }: CollaborativeEditorProps) {
   const room = useRoom();
   const userInfo = useSelf((me) => me.info);
@@ -36,20 +54,33 @@ export default function CollaborativeEditor({ setEditorInstance }: Collaborative
     {
       extensions: [
         StarterKit.configure({
-          history: false, 
+          history: false,
         }),
         Placeholder.configure({
           placeholder: "팀원들과 함께 회의록을 작성해보세요...",
         }),
         Collaboration.configure({
-          document: yDoc, 
+          document: yDoc,
         }),
         ...(provider ? [
           CollaborationCursor.configure({
             provider: provider,
             user: {
               name: userInfo?.name || "Anonymous",
-              color: userInfo?.color || "#0b0f66",
+              color: generateUserColor(userInfo?.name || "Anonymous"),
+            },
+            render: (user) => {
+              const cursor = document.createElement('span');
+              cursor.classList.add('collaboration-cursor__caret');
+              cursor.style.borderColor = user.color;
+
+              const label = document.createElement('div');
+              label.classList.add('collaboration-cursor__label');
+              label.style.backgroundColor = user.color;
+              label.textContent = (user.name || 'A')[0].toUpperCase();
+
+              cursor.appendChild(label);
+              return cursor;
             },
           })
         ] : []),
